@@ -1,6 +1,6 @@
 # Калькулятор взлома замков Gothic Remake
 
-HTML-страница для решения мини-игры взлома замка из Gothic Remake.
+HTML-страница для решения мини-игры взлома замка из Gothic Remake: [lockpick.html](lockpick.html).
 
 ## Что это
 
