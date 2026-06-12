@@ -14,6 +14,10 @@
     color: #eee;
     font-size: 16px;
   }
+  .container {
+    max-width: 720px;
+    margin: 0 auto;
+  }
   h1 {
     font-size: 1.3rem;
     text-align: center;
@@ -201,6 +205,8 @@
 </head>
 <body>
 
+<div class="container">
+
 <h1>Калькулятор взлома замков Gothic Remake</h1>
 <div class="subtitle">Позиция &mdash; положение пластины относительно левого крайнего положения, начиная с нуля, или количество отверстий правее защёлки (0-6), центр = 3.<br/>
 Нажмите + или − для связи. + &mdash; пластина движется в ту же сторону, − &mdash; в противоположную.  Повторное нажатие сбрасывает.<br/>
@@ -222,6 +228,8 @@
 <button id="calc">Рассчитать</button>
 
 <div id="result"></div>
+
+</div>
 
 <script>
 const state = {
