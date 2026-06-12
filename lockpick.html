@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Калькулятор взлома замков Gothic Remake</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    margin: 0;
+    padding: 12px;
+    background: #1a1a2e;
+    color: #eee;
+    font-size: 16px;
+  }
+  h1 {
+    font-size: 1.3rem;
+    text-align: center;
+    margin: 0 0 8px 0;
+    color: #ffd700;
+  }
+  .subtitle {
+    text-align: center;
+    font-size: 0.85rem;
+    color: #aaa;
+    margin-bottom: 16px;
+  }
+  .table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    background: #16213e;
+    border-radius: 10px;
+    padding: 8px;
+    margin-bottom: 16px;
+    border: 1px solid #0f3460;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: 32px 90px repeat(6, 1fr);
+    gap: 4px;
+    min-width: 580px;
+    align-items: center;
+  }
+  .grid > div {
+    text-align: center;
+    padding: 6px 2px;
+    font-size: 0.9rem;
+  }
+  .header {
+    font-weight: bold;
+    color: #ffd700;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+  }
+  .pin-num {
+    font-weight: bold;
+    color: #ffd700;
+    font-size: 1rem;
+  }
+  .pos-control {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .pos-btn {
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 8px;
+    background: #0f3460;
+    color: #eee;
+    font-size: 1.2rem;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    touch-action: manipulation;
+  }
+  .pos-btn:active { background: #e94560; }
+  .pos-val {
+    min-width: 28px;
+    font-weight: bold;
+    font-size: 1.1rem;
+    color: #fff;
+  }
+  .link-cell {
+    display: flex;
+    gap: 4px;
+    justify-content: center;
+  }
+  .link-btn {
+    width: 36px;
+    height: 36px;
+    border: 2px solid #0f3460;
+    border-radius: 8px;
+    background: #1a1a2e;
+    color: #888;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    touch-action: manipulation;
+    transition: all 0.15s;
+  }
+  .link-btn.active-plus {
+    background: #2e7d32;
+    border-color: #4caf50;
+    color: #fff;
+  }
+  .link-btn.active-minus {
+    background: #c62828;
+    border-color: #f44336;
+    color: #fff;
+  }
+  .diag {
+    color: #444;
+    font-size: 1.2rem;
+  }
+  #calc {
+    display: block;
+    width: 100%;
+    padding: 16px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    border: none;
+    border-radius: 10px;
+    background: #e94560;
+    color: #fff;
+    cursor: pointer;
+    margin-bottom: 20px;
+    touch-action: manipulation;
+  }
+  #calc:active { background: #ff6b81; }
+  #result { margin-top: 10px; }
+  .result-title {
+    font-size: 1.1rem;
+    color: #ffd700;
+    margin: 16px 0 8px 0;
+    font-weight: bold;
+  }
+  .result-table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    background: #16213e;
+    border-radius: 10px;
+    padding: 8px;
+    border: 1px solid #0f3460;
+    margin-bottom: 16px;
+  }
+  table {
+    width: 100%;
+    min-width: 400px;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+  }
+  th, td {
+    padding: 6px 8px;
+    text-align: center;
+    border-bottom: 1px solid #0f3460;
+  }
+  th {
+    color: #ffd700;
+    font-weight: bold;
+    font-size: 0.85rem;
+  }
+  td { color: #ddd; }
+  tr:hover td { background: rgba(233, 69, 96, 0.1); }
+  .step-num { color: #ffd700; font-weight: bold; }
+  .move-name { color: #4fc3f7; font-weight: bold; white-space: nowrap; }
+  .target-row td { color: #69f0ae; font-weight: bold; }
+  .short-form {
+    background: #16213e;
+    border-radius: 10px;
+    padding: 12px;
+    border: 1px solid #0f3460;
+    font-family: "Courier New", monospace;
+    font-size: 1rem;
+    line-height: 1.6;
+    color: #4fc3f7;
+    word-break: break-word;
+  }
+  .no-solution {
+    color: #f44336;
+    font-weight: bold;
+    text-align: center;
+    padding: 20px;
+  }
+  .hint {
+    font-size: 0.8rem;
+    color: #888;
+    text-align: center;
+    margin-top: 4px;
+  }
+</style>
+<base target="_blank">
+</head>
+<body>
+
+<h1>Калькулятор взлома замков</h1>
+<div class="subtitle">Gothic Remake &mdash; количество отверстий правее защёлки (0&ndash;6), центр = 3</div>
+
+<div class="table-wrap">
+  <div class="grid" id="inputGrid">
+    <div class="header">№</div>
+    <div class="header">Поз.</div>
+    <div class="header">Связь 1</div>
+    <div class="header">Связь 2</div>
+    <div class="header">Связь 3</div>
+    <div class="header">Связь 4</div>
+    <div class="header">Связь 5</div>
+    <div class="header">Связь 6</div>
+  </div>
+</div>
+<div class="hint">Нажмите + или − для связи. Повторное нажатие сбрасывает.</div>
+
+<button id="calc">Рассчитать</button>
+
+<div id="result"></div>
+
+<script>
+const state = {
+  positions: [3, 3, 3, 3, 3, 3],
+  links: Array.from({length: 6}, () => Array(6).fill(0))
+};
+
+const grid = document.getElementById('inputGrid');
+
+for (let i = 0; i < 6; i++) {
+  // Номер пластины
+  const num = document.createElement('div');
+  num.className = 'pin-num';
+  num.textContent = i + 1;
+  grid.appendChild(num);
+
+  // Позиция
+  const posDiv = document.createElement('div');
+  posDiv.className = 'pos-control';
+  const btnMinus = document.createElement('button');
+  btnMinus.className = 'pos-btn';
+  btnMinus.textContent = '−';
+  const val = document.createElement('div');
+  val.className = 'pos-val';
+  val.textContent = '3';
+  const btnPlus = document.createElement('button');
+  btnPlus.className = 'pos-btn';
+  btnPlus.textContent = '+';
+  
+  btnMinus.onclick = () => {
+    if (state.positions[i] > 0) {
+      state.positions[i]--;
+      val.textContent = state.positions[i];
+    }
+  };
+  btnPlus.onclick = () => {
+    if (state.positions[i] < 6) {
+      state.positions[i]++;
+      val.textContent = state.positions[i];
+    }
+  };
+  posDiv.append(btnMinus, val, btnPlus);
+  grid.appendChild(posDiv);
+
+  // Связи
+  for (let j = 0; j < 6; j++) {
+    const cell = document.createElement('div');
+    if (i === j) {
+      cell.innerHTML = '<span class="diag">—</span>';
+    } else {
+      const wrap = document.createElement('div');
+      wrap.className = 'link-cell';
+      const btnP = document.createElement('button');
+      btnP.className = 'link-btn';
+      btnP.textContent = '+';
+      const btnM = document.createElement('button');
+      btnM.className = 'link-btn';
+      btnM.textContent = '−';
+      
+      const update = () => {
+        const v = state.links[i][j];
+        btnP.className = 'link-btn' + (v === 1 ? ' active-plus' : '');
+        btnM.className = 'link-btn' + (v === -1 ? ' active-minus' : '');
+      };
+      
+      btnP.onclick = () => {
+        state.links[i][j] = state.links[i][j] === 1 ? 0 : 1;
+        update();
+      };
+      btnM.onclick = () => {
+        state.links[i][j] = state.links[i][j] === -1 ? 0 : -1;
+        update();
+      };
+      wrap.append(btnP, btnM);
+      cell.appendChild(wrap);
+    }
+    grid.appendChild(cell);
+  }
+}
+
+function encode(s) { return s.join(','); }
+
+function solve() {
+  const start = [...state.positions];
+  const target = [3, 3, 3, 3, 3, 3];
+  
+  if (start.every((v, i) => v === target[i])) {
+    return { path: [], states: [start] };
+  }
+
+  const moves = [];
+  for (let i = 0; i < 6; i++) {
+    const dR = state.links[i].map((v, idx) => idx === i ? 1 : v);
+    const dL = state.links[i].map((v, idx) => idx === i ? -1 : -v);
+    moves.push({ name: (i+1) + '→', delta: dR });
+    moves.push({ name: (i+1) + '←', delta: dL });
+  }
+
+  const isValid = s => s.every(x => x >= 0 && x <= 6);
+
+  const inv = { '1→':'1←','1←':'1→','2→':'2←','2←':'2→','3→':'3←','3←':'3→',
+                '4→':'4←','4←':'4→','5→':'5←','5←':'5→','6→':'6←','6←':'6→' };
+
+  const fQ = [[start, []]];
+  const bQ = [[target, []]];
+  const fV = new Map([[encode(start), []]]);
+  const bV = new Map([[encode(target), []]]);
+
+  function expand(queue, visited, other) {
+    const len = queue.length;
+    for (let k = 0; k < len; k++) {
+      const [st, path] = queue.shift();
+      for (const m of moves) {
+        const ns = st.map((v, idx) => v + m.delta[idx]);
+        if (isValid(ns)) {
+          const key = encode(ns);
+          if (!visited.has(key)) {
+            const npath = path.concat(m.name);
+            if (other.has(key)) {
+              return [ns, npath, other.get(key)];
+            }
+            visited.set(key, npath);
+            queue.push([ns, npath]);
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  let steps = 0;
+  while (fQ.length && bQ.length) {
+    let res = expand(fQ, fV, bV);
+    if (res) {
+      const [, fPath, bPath] = res;
+      const bInv = bPath.slice().reverse().map(x => inv[x]);
+      const fullPath = fPath.concat(bInv);
+      // Восстановим состояния
+      const states = [start];
+      let cur = [...start];
+      for (const name of fullPath) {
+        const m = moves.find(x => x.name === name);
+        cur = cur.map((v, idx) => v + m.delta[idx]);
+        states.push([...cur]);
+      }
+      return { path: fullPath, states };
+    }
+    res = expand(bQ, bV, fV);
+    if (res) {
+      const [, bPath, fPath] = res;
+      const bInv = bPath.slice().reverse().map(x => inv[x]);
+      const fullPath = fPath.concat(bInv);
+      const states = [start];
+      let cur = [...start];
+      for (const name of fullPath) {
+        const m = moves.find(x => x.name === name);
+        cur = cur.map((v, idx) => v + m.delta[idx]);
+        states.push([...cur]);
+      }
+      return { path: fullPath, states };
+    }
+    steps++;
+    if (steps > 60) break;
+  }
+  return null;
+}
+
+function compress(path) {
+  if (!path || !path.length) return '—';
+  const out = [];
+  let cur = path[0], cnt = 1;
+  for (let i = 1; i < path.length; i++) {
+    if (path[i] === cur) cnt++;
+    else { out.push(cnt === 1 ? cur : `${cur}×${cnt}`); cur = path[i]; cnt = 1; }
+  }
+  out.push(cnt === 1 ? cur : `${cur}×${cnt}`);
+  return out.join(', ');
+}
+
+document.getElementById('calc').onclick = () => {
+  const resDiv = document.getElementById('result');
+  resDiv.innerHTML = '<div style="text-align:center;color:#888;padding:20px;">Расчёт...</div>';
+  
+  setTimeout(() => {
+    const sol = solve();
+    if (!sol) {
+      resDiv.innerHTML = '<div class="no-solution">Решение не найдено. Проверьте связи и позиции.</div>';
+      return;
+    }
+    
+    const { path, states } = sol;
+    let html = '';
+    
+    // Подробная таблица
+    html += '<div class="result-title">Пошаговое решение</div>';
+    html += '<div class="result-table-wrap"><table><thead><tr><th>№</th><th>Ход</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th></tr></thead><tbody>';
+    for (let i = 0; i < states.length; i++) {
+      const isTarget = i === states.length - 1;
+      const rowClass = isTarget ? 'target-row' : '';
+      const move = i === 0 ? '—' : `<span class="move-name">${path[i-1]}</span>`;
+      const num = i === 0 ? '<span class="step-num">0</span>' : `<span class="step-num">${i}</span>`;
+      const cells = states[i].map(v => `<td>${v}</td>`).join('');
+      html += `<tr class="${rowClass}"><td>${num}</td><td>${move}</td>${cells}</tr>`;
+    }
+    html += '</tbody></table></div>';
+    
+    // Сокращённая запись
+    html += '<div class="result-title">Сокращённая запись</div>';
+    html += `<div class="short-form">${compress(path)}</div>`;
+    html += `<div class="hint">Всего ходов: ${path.length}</div>`;
+    
+    resDiv.innerHTML = html;
+  }, 50);
+};
+</script>
+
+</body>
+</html>
