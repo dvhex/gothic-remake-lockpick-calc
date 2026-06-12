@@ -30,6 +30,26 @@
     color: #aaa;
     margin-bottom: 16px;
   }
+  .settings {
+    background: #16213e;
+    border: 1px solid #0f3460;
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .settings label { color: #ffd700; font-weight: bold; }
+  .settings select {
+    background: #1a1a2e;
+    color: #eee;
+    border: 1px solid #0f3460;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 1rem;
+  }
   .table-wrap {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
@@ -41,7 +61,7 @@
   }
   .grid {
     display: grid;
-    grid-template-columns: 32px 90px repeat(6, 1fr);
+    grid-template-columns: 32px 90px repeat(var(--cols, 6), 1fr);
     gap: 4px;
     min-width: 580px;
     align-items: center;
@@ -209,19 +229,18 @@
 
 <h1>Калькулятор взлома замков Gothic Remake</h1>
 <div class="subtitle">Позиция &mdash; положение пластины относительно левого крайнего положения, начиная с нуля, или количество отверстий правее защёлки (0-6), центр = 3.<br/>
-Нажмите + или − для связи. + &mdash; пластина движется в ту же сторону, − &mdash; в противоположную.  Повторное нажатие сбрасывает.<br/>
+Нажмите + или &minus; для связи. + &mdash; пластина движется в ту же сторону, &minus; &mdash; в противоположную.  Повторное нажатие сбрасывает.<br/>
 Для полного сброса обновите страницу.</div>
+
+<div class="settings">
+  <label for="pinCount">Количество пластин:</label>
+  <select id="pinCount"></select>
+</div>
 
 <div class="table-wrap">
   <div class="grid" id="inputGrid">
     <div class="header">№</div>
     <div class="header">Поз.</div>
-    <div class="header">Связь 1</div>
-    <div class="header">Связь 2</div>
-    <div class="header">Связь 3</div>
-    <div class="header">Связь 4</div>
-    <div class="header">Связь 5</div>
-    <div class="header">Связь 6</div>
   </div>
 </div>
 
@@ -233,95 +252,126 @@
 
 <script>
 const state = {
-  positions: [3, 3, 3, 3, 3, 3],
-  links: Array.from({length: 6}, () => Array(6).fill(0))
+  n: 6,
+  positions: Array(10).fill(3),
+  links: Array.from({length: 10}, () => Array(10).fill(0))
 };
 
-const grid = document.getElementById('inputGrid');
+const pinCountSelect = document.getElementById('pinCount');
+for (let n = 2; n <= 10; n++) {
+  const opt = document.createElement('option');
+  opt.value = n;
+  opt.textContent = n;
+  if (n === 6) opt.selected = true;
+  pinCountSelect.appendChild(opt);
+}
 
-for (let i = 0; i < 6; i++) {
-  // Номер пластины
-  const num = document.createElement('div');
-  num.className = 'pin-num';
-  num.textContent = i + 1;
-  grid.appendChild(num);
+function resetState(n) {
+  state.n = n;
+  state.positions = Array(n).fill(3);
+  state.links = Array.from({length: n}, () => Array(n).fill(0));
+}
 
-  // Позиция
-  const posDiv = document.createElement('div');
-  posDiv.className = 'pos-control';
-  const btnMinus = document.createElement('button');
-  btnMinus.className = 'pos-btn';
-  btnMinus.textContent = '−';
-  const val = document.createElement('div');
-  val.className = 'pos-val';
-  val.textContent = '3';
-  const btnPlus = document.createElement('button');
-  btnPlus.className = 'pos-btn';
-  btnPlus.textContent = '+';
-  
-  btnMinus.onclick = () => {
-    if (state.positions[i] > 0) {
-      state.positions[i]--;
-      val.textContent = state.positions[i];
-    }
-  };
-  btnPlus.onclick = () => {
-    if (state.positions[i] < 6) {
-      state.positions[i]++;
-      val.textContent = state.positions[i];
-    }
-  };
-  posDiv.append(btnMinus, val, btnPlus);
-  grid.appendChild(posDiv);
+function renderGrid() {
+  const grid = document.getElementById('inputGrid');
+  grid.innerHTML = '<div class="header">№</div><div class="header">Поз.</div>';
+  for (let j = 1; j <= state.n; j++) {
+    const h = document.createElement('div');
+    h.className = 'header';
+    h.textContent = 'Связь ' + j;
+    grid.appendChild(h);
+  }
+  grid.style.setProperty('--cols', state.n);
 
-  // Связи
-  for (let j = 0; j < 6; j++) {
-    const cell = document.createElement('div');
-    if (i === j) {
-      cell.innerHTML = '<span class="diag">—</span>';
-    } else {
-      const wrap = document.createElement('div');
-      wrap.className = 'link-cell';
-      const btnP = document.createElement('button');
-      btnP.className = 'link-btn';
-      btnP.textContent = '+';
-      const btnM = document.createElement('button');
-      btnM.className = 'link-btn';
-      btnM.textContent = '−';
-      
-      const update = () => {
-        const v = state.links[i][j];
-        btnP.className = 'link-btn' + (v === 1 ? ' active-plus' : '');
-        btnM.className = 'link-btn' + (v === -1 ? ' active-minus' : '');
-      };
-      
-      btnP.onclick = () => {
-        state.links[i][j] = state.links[i][j] === 1 ? 0 : 1;
-        update();
-      };
-      btnM.onclick = () => {
-        state.links[i][j] = state.links[i][j] === -1 ? 0 : -1;
-        update();
-      };
-      wrap.append(btnP, btnM);
-      cell.appendChild(wrap);
+  for (let i = 0; i < state.n; i++) {
+    const num = document.createElement('div');
+    num.className = 'pin-num';
+    num.textContent = i + 1;
+    grid.appendChild(num);
+
+    const posDiv = document.createElement('div');
+    posDiv.className = 'pos-control';
+    const btnMinus = document.createElement('button');
+    btnMinus.className = 'pos-btn';
+    btnMinus.textContent = '−';
+    const val = document.createElement('div');
+    val.className = 'pos-val';
+    val.textContent = state.positions[i];
+    const btnPlus = document.createElement('button');
+    btnPlus.className = 'pos-btn';
+    btnPlus.textContent = '+';
+
+    btnMinus.onclick = () => {
+      if (state.positions[i] > 0) {
+        state.positions[i]--;
+        val.textContent = state.positions[i];
+      }
+    };
+    btnPlus.onclick = () => {
+      if (state.positions[i] < 6) {
+        state.positions[i]++;
+        val.textContent = state.positions[i];
+      }
+    };
+    posDiv.append(btnMinus, val, btnPlus);
+    grid.appendChild(posDiv);
+
+    for (let j = 0; j < state.n; j++) {
+      const cell = document.createElement('div');
+      if (i === j) {
+        cell.innerHTML = '<span class="diag">—</span>';
+      } else {
+        const wrap = document.createElement('div');
+        wrap.className = 'link-cell';
+        const btnP = document.createElement('button');
+        btnP.className = 'link-btn';
+        btnP.textContent = '+';
+        const btnM = document.createElement('button');
+        btnM.className = 'link-btn';
+        btnM.textContent = '−';
+
+        const update = () => {
+          const v = state.links[i][j];
+          btnP.className = 'link-btn' + (v === 1 ? ' active-plus' : '');
+          btnM.className = 'link-btn' + (v === -1 ? ' active-minus' : '');
+        };
+
+        btnP.onclick = () => {
+          state.links[i][j] = state.links[i][j] === 1 ? 0 : 1;
+          update();
+        };
+        btnM.onclick = () => {
+          state.links[i][j] = state.links[i][j] === -1 ? 0 : -1;
+          update();
+        };
+        wrap.append(btnP, btnM);
+        cell.appendChild(wrap);
+      }
+      grid.appendChild(cell);
     }
-    grid.appendChild(cell);
   }
 }
+
+pinCountSelect.onchange = () => {
+  resetState(parseInt(pinCountSelect.value, 10));
+  renderGrid();
+};
+
+renderGrid();
 
 function encode(s) { return s.join(','); }
 
 function solve() {
+  const n = state.n;
   const start = [...state.positions];
-  const target = [3, 3, 3, 3, 3, 3];
-  
+  const target = Array(n).fill(3);
+
   if (start.every((v, i) => v === target[i])) {
     return { path: [], states: [start] };
   }
 
   const moves = [];
-  for (let i = 0; i < 6; i++) {
+  for (let i = 0; i < n; i++) {
     const dR = state.links[i].map((v, idx) => idx === i ? 1 : v);
     const dL = state.links[i].map((v, idx) => idx === i ? -1 : -v);
     moves.push({ name: (i+1) + '→', delta: dR });
@@ -330,8 +380,11 @@ function solve() {
 
   const isValid = s => s.every(x => x >= 0 && x <= 6);
 
-  const inv = { '1→':'1←','1←':'1→','2→':'2←','2←':'2→','3→':'3←','3←':'3→',
-                '4→':'4←','4←':'4→','5→':'5←','5←':'5→','6→':'6←','6←':'6→' };
+  const inv = {};
+  for (let i = 1; i <= n; i++) {
+    inv[i + '→'] = i + '←';
+    inv[i + '←'] = i + '→';
+  }
 
   const fQ = [[start, []]];
   const bQ = [[target, []]];
@@ -367,7 +420,6 @@ function solve() {
       const [, fPath, bPath] = res;
       const bInv = bPath.slice().reverse().map(x => inv[x]);
       const fullPath = fPath.concat(bInv);
-      // Восстановим состояния
       const states = [start];
       let cur = [...start];
       for (const name of fullPath) {
@@ -392,7 +444,7 @@ function solve() {
       return { path: fullPath, states };
     }
     steps++;
-    if (steps > 60) break;
+    if (steps > 80) break;
   }
   return null;
 }
@@ -412,20 +464,22 @@ function compress(path) {
 document.getElementById('calc').onclick = () => {
   const resDiv = document.getElementById('result');
   resDiv.innerHTML = '<div style="text-align:center;color:#888;padding:20px;">Расчёт...</div>';
-  
+
   setTimeout(() => {
     const sol = solve();
     if (!sol) {
       resDiv.innerHTML = '<div class="no-solution">Решение не найдено. Проверьте связи и позиции.</div>';
       return;
     }
-    
+
     const { path, states } = sol;
+    const n = state.n;
     let html = '';
-    
-    // Подробная таблица
+
     html += '<div class="result-title">Пошаговое решение</div>';
-    html += '<div class="result-table-wrap"><table><thead><tr><th>№</th><th>Ход</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th></tr></thead><tbody>';
+    html += '<div class="result-table-wrap"><table><thead><tr><th>№</th><th>Ход</th>';
+    for (let i = 1; i <= n; i++) html += `<th>${i}</th>`;
+    html += '</tr></thead><tbody>';
     for (let i = 0; i < states.length; i++) {
       const isTarget = i === states.length - 1;
       const rowClass = isTarget ? 'target-row' : '';
@@ -435,12 +489,11 @@ document.getElementById('calc').onclick = () => {
       html += `<tr class="${rowClass}"><td>${num}</td><td>${move}</td>${cells}</tr>`;
     }
     html += '</tbody></table></div>';
-    
-    // Сокращённая запись
+
     html += '<div class="result-title">Сокращённая запись</div>';
     html += `<div class="short-form">${compress(path)}</div>`;
     html += `<div class="hint">Всего ходов: ${path.length}</div>`;
-    
+
     resDiv.innerHTML = html;
   }, 50);
 };
