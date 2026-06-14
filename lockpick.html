@@ -171,10 +171,25 @@
     background: #16213e;
     color: #aaa;
     cursor: pointer;
-    margin-bottom: 20px;
+    margin-bottom: 12px;
     touch-action: manipulation;
   }
   #reset:active { background: #0f3460; color: #fff; }
+  #share {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    font-size: 1rem;
+    font-weight: bold;
+    border: 1px solid #0f3460;
+    border-radius: 10px;
+    background: #16213e;
+    color: #4fc3f7;
+    cursor: pointer;
+    margin-bottom: 20px;
+    touch-action: manipulation;
+  }
+  #share:active { background: #0f3460; color: #fff; }
   #result { margin-top: 10px; }
   .result-title {
     font-size: 1.1rem;
@@ -261,6 +276,7 @@
 
 <button id="calc">Рассчитать</button>
 <button id="reset">Сброс</button>
+<button id="share">Копировать ссылку</button>
 
 <div id="result"></div>
 
@@ -287,6 +303,30 @@ function resetState(n) {
   state.positions = Array(n).fill(3);
   state.links = Array.from({length: n}, () => Array(n).fill(0));
 }
+
+function loadFromUrl() {
+  const params = new URLSearchParams(location.search);
+  if (!params.has('n')) return false;
+  const n = parseInt(params.get('n'), 10);
+  if (isNaN(n) || n < 2 || n > 10) return false;
+  const pRaw = params.get('p');
+  const lRaw = params.get('l');
+  if (!pRaw || !lRaw) return false;
+  const positions = pRaw.split(',').map(x => parseInt(x, 10));
+  if (positions.length !== n || positions.some(x => isNaN(x) || x < 0 || x > 6)) return false;
+  const rows = lRaw.split(';');
+  if (rows.length !== n) return false;
+  const links = rows.map(row => row.split(',').map(x => parseInt(x, 10)));
+  if (links.some(row => row.length !== n || row.some(x => isNaN(x) || x < -1 || x > 1))) return false;
+  for (let i = 0; i < n; i++) if (links[i][i] !== 0) return false;
+  state.n = n;
+  state.positions = positions;
+  state.links = links;
+  pinCountSelect.value = n;
+  return true;
+}
+
+loadFromUrl();
 
 function renderGrid() {
   const grid = document.getElementById('inputGrid');
@@ -351,6 +391,7 @@ function renderGrid() {
           btnP.className = 'link-btn' + (v === 1 ? ' active-plus' : '');
           btnM.className = 'link-btn' + (v === -1 ? ' active-minus' : '');
         };
+        update();
 
         btnP.onclick = () => {
           state.links[i][j] = state.links[i][j] === 1 ? 0 : 1;
@@ -378,9 +419,37 @@ document.getElementById('reset').onclick = () => {
   resetState(state.n);
   renderGrid();
   document.getElementById('result').innerHTML = '';
+  history.pushState(null, '', location.pathname);
 };
 
-renderGrid();
+window.addEventListener('popstate', () => {
+  loadFromUrl();
+  renderGrid();
+  document.getElementById('result').innerHTML = '';
+});
+
+document.getElementById('share').onclick = () => {
+  const params = new URLSearchParams();
+  params.set('n', state.n);
+  params.set('p', state.positions.join(','));
+  params.set('l', state.links.map(row => row.join(',')).join(';'));
+  const url = new URL(location.href);
+  url.search = params.toString();
+  navigator.clipboard.writeText(url.toString()).then(() => {
+    const btn = document.getElementById('share');
+    const old = btn.textContent;
+    btn.textContent = 'Ссылка скопирована';
+    setTimeout(() => btn.textContent = old, 1500);
+  }).catch(() => {
+    alert('Не удалось скопировать ссылку');
+  });
+};
+
+if (loadFromUrl()) {
+  renderGrid();
+} else {
+  renderGrid();
+}
 
 function encode(s) { return s.join(','); }
 
