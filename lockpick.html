@@ -312,16 +312,17 @@ function loadFromUrl() {
   const pRaw = params.get('p');
   const lRaw = params.get('l');
   if (!pRaw || !lRaw) return false;
-  const positions = pRaw.split(',').map(x => parseInt(x, 10));
-  if (positions.length !== n || positions.some(x => isNaN(x) || x < 0 || x > 6)) return false;
-  const rows = lRaw.split(';');
+  if (pRaw.length !== n || pRaw.split('').some(x => !/^[0-6]$/.test(x))) return false;
+  const positions = pRaw.split('').map(x => parseInt(x, 10));
+  const rows = lRaw.split('-');
   if (rows.length !== n) return false;
-  const links = rows.map(row => row.split(',').map(x => parseInt(x, 10)));
-  if (links.some(row => row.length !== n || row.some(x => isNaN(x) || x < -1 || x > 1))) return false;
+  const links = rows.map(row => row.split('').map(x => parseInt(x, 10)));
+  if (links.some(row => row.length !== n || row.some(x => isNaN(x) || x < 0 || x > 2))) return false;
   for (let i = 0; i < n; i++) if (links[i][i] !== 0) return false;
+  const decodedLinks = links.map(row => row.map(v => v === 2 ? -1 : v));
   state.n = n;
   state.positions = positions;
-  state.links = links;
+  state.links = decodedLinks;
   pinCountSelect.value = n;
   return true;
 }
@@ -429,10 +430,11 @@ window.addEventListener('popstate', () => {
 });
 
 document.getElementById('share').onclick = () => {
+  const encodedLinks = state.links.map(row => row.map(v => v === -1 ? 2 : v).join('')).join('-');
   const params = new URLSearchParams();
   params.set('n', state.n);
-  params.set('p', state.positions.join(','));
-  params.set('l', state.links.map(row => row.join(',')).join(';'));
+  params.set('p', state.positions.join(''));
+  params.set('l', encodedLinks);
   const url = new URL(location.href);
   url.search = params.toString();
   navigator.clipboard.writeText(url.toString()).then(() => {
