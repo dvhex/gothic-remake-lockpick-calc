@@ -304,6 +304,21 @@ function resetState(n) {
   state.links = Array.from({length: n}, () => Array(n).fill(0));
 }
 
+function updateUrl(replace = true) {
+  const encodedLinks = state.links.map(row => row.map(v => v === -1 ? 2 : v).join('')).join('-');
+  const params = new URLSearchParams();
+  params.set('n', state.n);
+  params.set('p', state.positions.join(''));
+  params.set('l', encodedLinks);
+  const url = new URL(location.href);
+  url.search = params.toString();
+  if (replace) {
+    history.replaceState(null, '', url.toString());
+  } else {
+    history.pushState(null, '', url.toString());
+  }
+}
+
 function loadFromUrl() {
   const params = new URLSearchParams(location.search);
   if (!params.has('n')) return false;
@@ -362,12 +377,14 @@ function renderGrid() {
       if (state.positions[i] > 0) {
         state.positions[i]--;
         val.textContent = state.positions[i];
+        updateUrl();
       }
     };
     btnPlus.onclick = () => {
       if (state.positions[i] < 6) {
         state.positions[i]++;
         val.textContent = state.positions[i];
+        updateUrl();
       }
     };
     posDiv.append(btnMinus, val, btnPlus);
@@ -397,10 +414,12 @@ function renderGrid() {
         btnP.onclick = () => {
           state.links[i][j] = state.links[i][j] === 1 ? 0 : 1;
           update();
+          updateUrl();
         };
         btnM.onclick = () => {
           state.links[i][j] = state.links[i][j] === -1 ? 0 : -1;
           update();
+          updateUrl();
         };
         wrap.append(btnP, btnM);
         cell.appendChild(wrap);
@@ -410,17 +429,11 @@ function renderGrid() {
   }
 }
 
-pinCountSelect.onchange = () => {
-  resetState(parseInt(pinCountSelect.value, 10));
-  renderGrid();
-  document.getElementById('result').innerHTML = '';
-};
-
 document.getElementById('reset').onclick = () => {
   resetState(state.n);
   renderGrid();
   document.getElementById('result').innerHTML = '';
-  history.pushState(null, '', location.pathname);
+  history.replaceState(null, '', location.pathname);
 };
 
 window.addEventListener('popstate', () => {
@@ -429,22 +442,11 @@ window.addEventListener('popstate', () => {
   document.getElementById('result').innerHTML = '';
 });
 
-document.getElementById('share').onclick = () => {
-  const encodedLinks = state.links.map(row => row.map(v => v === -1 ? 2 : v).join('')).join('-');
-  const params = new URLSearchParams();
-  params.set('n', state.n);
-  params.set('p', state.positions.join(''));
-  params.set('l', encodedLinks);
-  const url = new URL(location.href);
-  url.search = params.toString();
-  navigator.clipboard.writeText(url.toString()).then(() => {
-    const btn = document.getElementById('share');
-    const old = btn.textContent;
-    btn.textContent = 'Ссылка скопирована';
-    setTimeout(() => btn.textContent = old, 1500);
-  }).catch(() => {
-    alert('Не удалось скопировать ссылку');
-  });
+pinCountSelect.onchange = () => {
+  resetState(parseInt(pinCountSelect.value, 10));
+  renderGrid();
+  document.getElementById('result').innerHTML = '';
+  updateUrl();
 };
 
 if (loadFromUrl()) {
@@ -556,6 +558,7 @@ function compress(path) {
 }
 
 document.getElementById('calc').onclick = () => {
+  updateUrl(false);
   const resDiv = document.getElementById('result');
   resDiv.innerHTML = '<div style="text-align:center;color:#888;padding:20px;">Расчёт...</div>';
 
